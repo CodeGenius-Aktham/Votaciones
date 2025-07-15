@@ -49,10 +49,55 @@
       font-size: 16px;
       cursor: pointer;
       transition: background 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
 
-    button:hover {
+    button:hover:not(:disabled) {
       background-color: #0056d8;
+    }
+
+    button:disabled {
+      background-color: #4caf50; /* verde */
+      cursor: default;
+    }
+
+    /* Estilos para el check animado */
+    .checkmark {
+      display: inline-block;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid white;
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0;
+      animation: fadeIn 0.5s forwards;
+    }
+
+    .checkmark::after {
+      content: "";
+      position: absolute;
+      left: 5px;
+      top: 9px;
+      width: 6px;
+      height: 12px;
+      border-right: 3px solid white;
+      border-bottom: 3px solid white;
+      transform: rotate(45deg);
+      animation: drawCheck 0.4s ease forwards;
+      animation-delay: 0.5s;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    @keyframes drawCheck {
+      from { width: 0; height: 0; }
+      to { width: 6px; height: 12px; }
     }
 
     .panel-container {
@@ -165,7 +210,7 @@
     <div class="detalle-texto">
       <h3>Logo 1</h3>
       <p>Este logo representa la identidad visual del liceo, simbolizando innovación, compromiso y excelencia académica.</p>
-      <button onclick="votar(1)">Votar por este logo</button>
+      <button id="votar1" onclick="votar(1, this)">Votar por este logo</button>
       <button class="volver-btn" onclick="volverAPaneles()">Volver</button>
     </div>
   </div>
@@ -177,7 +222,7 @@
     <div class="detalle-texto">
       <h3>Logo 2</h3>
       <p>Este diseño enfatiza la diversidad y la integración de saberes en el entorno educativo.</p>
-      <button onclick="votar(2)">Votar por este logo</button>
+      <button id="votar2" onclick="votar(2, this)">Votar por este logo</button>
       <button class="volver-btn" onclick="volverAPaneles()">Volver</button>
     </div>
   </div>
@@ -230,7 +275,7 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function votar(numero) {
+  function votar(numero, btn) {
     const nombre = document.getElementById('nombre').value.trim();
     const apellido = document.getElementById('apellido').value.trim();
     const añoSeccion = document.getElementById('año').value.trim();
@@ -239,6 +284,15 @@
       alert("Faltan datos del usuario.");
       return;
     }
+
+    // Deshabilitar el botón para evitar doble clic
+    btn.disabled = true;
+    btn.textContent = "Votado ";
+    
+    // Añadir check animado
+    const checkmark = document.createElement('span');
+    checkmark.classList.add('checkmark');
+    btn.appendChild(checkmark);
 
     db.collection("votantes").add({
       nombre,
@@ -250,7 +304,7 @@
       const logoKey = `logo${numero}`;
       const votosRef = db.collection("votos").doc("conteo");
 
-      db.runTransaction(transaction => {
+      return db.runTransaction(transaction => {
         return transaction.get(votosRef).then(doc => {
           if (!doc.exists) {
             transaction.set(votosRef, { logo1: 0, logo2: 0 });
@@ -259,16 +313,19 @@
           const nuevoConteo = (data[logoKey] || 0) + 1;
           transaction.update(votosRef, { [logoKey]: nuevoConteo });
         });
-      }).then(() => {
-        alert("¡Gracias por votar por el Logo " + numero + "!");
-        volverAPaneles();
-      }).catch(error => {
-        console.error("Error al actualizar votos:", error);
-        alert("Ocurrió un error al votar.");
       });
+    }).then(() => {
+      alert("¡Gracias por votar por el Logo " + numero + "!");
+      volverAPaneles();
     }).catch(error => {
-      console.error("Error al guardar votante:", error);
-      alert("No se pudo registrar tu voto.");
+      console.error("Error al actualizar votos o guardar votante:", error);
+      alert("Ocurrió un error al votar.");
+      // En caso de error, habilitar el botón nuevamente y quitar el check
+      btn.disabled = false;
+      btn.textContent = "Votar por este logo";
+      if (checkmark.parentNode) {
+        checkmark.parentNode.removeChild(checkmark);
+      }
     });
   }
 
