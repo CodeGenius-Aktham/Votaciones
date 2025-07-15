@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Votación del Logo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1000px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .hidden { display: none; }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 12px 24px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 10px;
+      background-color: #007AFF;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056d8;
+    }
+
+    .panel-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 30px;
+      box-shadow: 0 15px 50px rgba(0,0,0,0.1);
+      overflow: hidden;
+      transition: transform 0.3s;
+    }
+
+    .panel:hover {
+      transform: scale(1.02);
+    }
+
+    .panel img {
+      width: 100%;
+      height: auto;
+      border-top-left-radius: 30px;
+      border-top-right-radius: 30px;
+    }
+
+    .panel .content {
+      padding: 20px;
+    }
+
+    .detalle-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .detalle-img {
+      width: 100%;
+      max-width: 500px;
+      border-radius: 20px;
+    }
+
+    .detalle-texto {
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    .volver-btn {
+      background-color: #888;
+      margin-top: 30px;
+    }
+
+    @media (min-width: 768px) {
+      .panel-container {
+        flex-direction: row;
+      }
+
+      .panel {
+        width: 48%;
+      }
+
+      .detalle-container {
+        flex-direction: row;
+        justify-content: center;
+        align-items: flex-start;
+      }
+
+      .detalle-texto {
+        margin-top: 0;
+        margin-left: 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div id="registro" class="container">
+  <h1>Votación del logo</h1>
+  <h2>Registro de Usuario</h2>
+  <input type="text" id="nombre" placeholder="Nombre" required>
+  <input type="text" id="apellido" placeholder="Apellido" required>
+  <input type="text" id="año" placeholder="Año y Sección" required>
+  <button onclick="entrar()">Entrar</button>
+</div>
+
+<div id="paneles" class="container hidden">
+  <h2>Selecciona un logo</h2>
+  <div class="panel-container">
+    <div class="panel">
+      <img src="https://via.placeholder.com/500x300.png?text=Logo+1" alt="Logo 1" />
+      <div class="content">
+        <button onclick="verDetalle(1)">Ver</button>
+      </div>
+    </div>
+    <div class="panel">
+      <img src="https://via.placeholder.com/500x300.png?text=Logo+2" alt="Logo 2" />
+      <div class="content">
+        <button onclick="verDetalle(2)">Ver</button>
+      </div>
+    </div>
+  </div>
+  <button class="volver-btn" onclick="volverARegistro()">Volver al Registro</button>
+</div>
+
+<div id="detalle1" class="container hidden">
+  <div class="detalle-container">
+    <img class="detalle-img" src="https://via.placeholder.com/800x500.png?text=Logo+1+Completo" alt="Logo 1 completo">
+    <div class="detalle-texto">
+      <h3>Logo 1</h3>
+      <p>Este logo representa la identidad visual del liceo, simbolizando innovación, compromiso y excelencia académica.</p>
+      <button onclick="votar(1)">Votar por este logo</button>
+      <button class="volver-btn" onclick="volverAPaneles()">Volver</button>
+    </div>
+  </div>
+</div>
+
+<div id="detalle2" class="container hidden">
+  <div class="detalle-container">
+    <img class="detalle-img" src="https://via.placeholder.com/800x500.png?text=Logo+2+Completo" alt="Logo 2 completo">
+    <div class="detalle-texto">
+      <h3>Logo 2</h3>
+      <p>Este diseño enfatiza la diversidad y la integración de saberes en el entorno educativo.</p>
+      <button onclick="votar(2)">Votar por este logo</button>
+      <button class="volver-btn" onclick="volverAPaneles()">Volver</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+  // Tu configuración de Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyD4NiWTVdPMPaj4oYCucdB3iMHnEA40mUc",
+    authDomain: "votaciones-ab4a8.firebaseapp.com",
+    projectId: "votaciones-ab4a8",
+    storageBucket: "votaciones-ab4a8.firebasestorage.app",
+    messagingSenderId: "907693500832",
+    appId: "1:907693500832:web:5c7aab66fc696078819cc5",
+    measurementId: "G-4953Y21LQ9"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+
+<script>
+  function entrar() {
+    const nombre = document.getElementById('nombre').value;
+    const apellido = document.getElementById('apellido').value;
+    const año = document.getElementById('año').value;
+
+    if (nombre && apellido && año) {
+      document.getElementById('registro').classList.add('hidden');
+      document.getElementById('paneles').classList.remove('hidden');
+    } else {
+      alert("Por favor, completa todos los campos.");
+    }
+  }
+
+  function verDetalle(numero) {
+    document.getElementById('paneles').classList.add('hidden');
+    document.getElementById('detalle1').classList.add('hidden');
+    document.getElementById('detalle2').classList.add('hidden');
+
+    if (numero === 1) {
+      document.getElementById('detalle1').classList.remove('hidden');
+    } else {
+      document.getElementById('detalle2').classList.remove('hidden');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function votar(numero) {
+    const nombre = document.getElementById('nombre').value.trim();
+    const apellido = document.getElementById('apellido').value.trim();
+    const añoSeccion = document.getElementById('año').value.trim();
+
+    if (!nombre || !apellido || !añoSeccion) {
+      alert("Faltan datos del usuario.");
+      return;
+    }
+
+    db.collection("votantes").add({
+      nombre,
+      apellido,
+      año_seccion: añoSeccion,
+      logo_votado: numero,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      const logoKey = `logo${numero}`;
+      const votosRef = db.collection("votos").doc("conteo");
+
+      db.runTransaction(transaction => {
+        return transaction.get(votosRef).then(doc => {
+          if (!doc.exists) {
+            transaction.set(votosRef, { logo1: 0, logo2: 0 });
+          }
+          const data = doc.data() || {};
+          const nuevoConteo = (data[logoKey] || 0) + 1;
+          transaction.update(votosRef, { [logoKey]: nuevoConteo });
+        });
+      }).then(() => {
+        alert("¡Gracias por votar por el Logo " + numero + "!");
+        volverAPaneles();
+      }).catch(error => {
+        console.error("Error al actualizar votos:", error);
+        alert("Ocurrió un error al votar.");
+      });
+    }).catch(error => {
+      console.error("Error al guardar votante:", error);
+      alert("No se pudo registrar tu voto.");
+    });
+  }
+
+  function volverAPaneles() {
+    document.getElementById('detalle1').classList.add('hidden');
+    document.getElementById('detalle2').classList.add('hidden');
+    document.getElementById('paneles').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function volverARegistro() {
+    document.getElementById('paneles').classList.add('hidden');
+    document.getElementById('registro').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>
